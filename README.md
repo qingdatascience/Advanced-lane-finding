@@ -12,12 +12,14 @@ Output visual display of the lane boundaries and numerical estimation of lane cu
 ## Camera Calibration
 __1. Have the camera matrix and distortion coefficients been computed correctly and
 checked on one of the calibration images as a test?__
+
 The code for this step is in lines 8 through 36 of the file called undistorted.py.I first use glob() function to make a file_list for all the chessboard images in the camera_cal folder. I then start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image. Thus, objp is just a replicated array of coordinates, and objpoints will be appended with a copy of it every time I successfully detect all chessboard corners in a test image. imgpoints will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection. I then used the output objpoints and imgpoints to compute the camera calibration and distortion coefficients using the cv2.calibrateCamera() function. I applied this distortion correction to the test image using the cv2.undistort() function and obtained this result:
 
 <img src="https://cloud.githubusercontent.com/assets/19335028/23294924/b9a5d07a-fa22-11e6-9a3b-d3ce4e841026.jpg" width="45%"></img> <img src="https://cloud.githubusercontent.com/assets/19335028/23294929/bdb80228-fa22-11e6-90a1-24a74525e1d3.jpg" width="45%"></img> 
 
 ##Pipeline (single images)
 __1. Has the distortion correction been correctly applied to each image?__
+
 I saved the ‘mtx’ and ‘dist’ values as pickle file, I then read these values before I do the distortion correction, which is the first step in my pipeline. To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
 
 __Before ------------------------------------------------------------------------                                After__
@@ -25,6 +27,7 @@ __Before -----------------------------------------------------------------------
 <img src="https://cloud.githubusercontent.com/assets/19335028/23294977/0f2b9ade-fa23-11e6-9179-266ea27625b7.jpg" width="45%"></img> <img src="https://cloud.githubusercontent.com/assets/19335028/23294981/121f3e08-fa23-11e6-8265-7146335d04e5.jpg" width="45%"></img> 
 
 __2. Has a binary image been created using color transforms, gradients or other methods?__
+
 I applied sobel operator on x and y axis on gray scale image. I also selected the s and v channels of hls and hsv color space. I combined them into a binary image. Then I selected the yellow and white color in hsv color space using the following boundaries: 
 
       lower_yellow = np.array([20, 100, 100])
@@ -38,6 +41,7 @@ Below shows the processed image, which is the same image showed in step one.
 <img src="https://cloud.githubusercontent.com/assets/19335028/23295019/3e713218-fa23-11e6-975c-2663eda95901.jpg" width="45%"></img> 
 
 __3. Has a perspective transform been applied to rectify the image?__
+
 The code for my perspective transform is includes a function called warper(), which appears in lines 71 through 94 in the file image_process.py and video_process.py. The warper() function takes as inputs an image. I designated a a trapizoid region in the center bottom part of the image as source points and a rectangle region as destination points. 
 
   
@@ -61,6 +65,7 @@ Please be careful, the image.shape has been switched in img_size and source poin
 <img src="https://cloud.githubusercontent.com/assets/19335028/23295049/5d5d0c38-fa23-11e6-9361-61ce18a2f724.jpg" width="45%"></img> 
 
 __4. Have lane line pixels been identified in the rectified image and fit with a polynomial?__
+
 Then I setup a tracker class in tracker.py to find the lines based on the pixels that I have extracted in the warped_image. I actually can write up a function for processing images, but class is very useful for processing videos, which I will explain later. Please bear with me. 
 The algorithm used to find lines is called “Sliding Window”, which uses windows sliding horizontally to search the peak values, which usually means the lines. Numpy convolve() function can serve this purpose conveniently, only two things I need to do: squeezing all the pixels in the layer of one window level into 1D, and defining a search boundary. Here is central piece of code in tracker.py (line 21-47):  
         image_layer = np.sum(warped[int(warped.shape[0]-(level+1)*window_height):int(warped.shape[0]-level*window_height),:],
@@ -72,10 +77,12 @@ After I found all the line points, I fit the line using numpy.polyfit() function
 <img src="https://cloud.githubusercontent.com/assets/19335028/23295092/9092ccb4-fa23-11e6-94ac-3f7a78ad7fd0.jpg" width="45%"></img> 
 
 __5. Having identified the lane lines, has the radius of curvature of the road been estimated? And the position of the vehicle with respect to center in the lane?__
+
 In order to calculate the radius, I have to do another polyfit, this time with the real world meter values, which were transformed by the ratio reflected by ym_per_pix (meter per pixel in y axis) and xm_per_pix (meter per pixel in x axis). Codes are in line 186-206 in image_process.py. Figure is showed in step 4. 
 
 ##Pipeline (video)
 __1. Does the pipeline established with the test images work to process the video?__
+
 It sure does! 
 * [project video](https://youtu.be/UMuOYm5b3Tg)  
 * [challenge video](https://youtu.be/_PeFK5wWzLc)
